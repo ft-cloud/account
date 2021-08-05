@@ -1,5 +1,5 @@
 const {app} = require('./accountServer.js');
-const session = require('./session');
+const session = require('sessionlib/session');
 const account = require('./account')
 
 module.exports.init = function initSessionPaths() {

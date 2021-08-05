@@ -1,7 +1,7 @@
 var uuid = require('uuid');
 const crypto = require('crypto');
 const hashingSecret = "LEDWAll";
-const session = require('./session');
+const session = require('sessionlib/session');
 
 
 var account = {
