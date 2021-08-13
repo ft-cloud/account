@@ -27,7 +27,7 @@ global.connection.connect();
 
 app.use(cors());
 
-app.get("/api/:v/:server",(req, res) => {
+app.get("/api\\/v\\d\\/account|auth",(req, res) => {
     res.send(JSON.stringify({microService:"Account"}))
 })
 
