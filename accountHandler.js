@@ -1,11 +1,11 @@
 var account = require('./account');
-var session = require('./session');
+var session = require('sessionlib/session');
 
 const {app} = require('./accountServer.js');
 
 
 module.exports.init = function initAccountPaths() {
-
+//TODO add info function without session instead uuid of account
 
     app.get('/api/v1/account/info', (req, res) => {
 
