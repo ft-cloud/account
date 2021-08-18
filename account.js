@@ -66,6 +66,7 @@ var account = {
                    FROM account
                    WHERE uuid = ?`;
             global.connection.query(sql, [uuid], function (err, result) {
+                console.log(result);
                 resolve(result[0].admin);
             });
         })
