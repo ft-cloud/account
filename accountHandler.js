@@ -63,7 +63,7 @@ module.exports.init = function initAccountPaths() {
             session.getUserUUID(req.query.session,(uuid)=> {
                 if(uuid) {
 
-                    account.isUserAdmin(req.query.uuid).then((admin) => {
+                    account.isUserAdmin(uuid).then((admin) => {
                         res.send(JSON.stringify({isAdmin: admin}));
                     });
 
