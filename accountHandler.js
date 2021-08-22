@@ -54,6 +54,30 @@ module.exports.init = function initAccountPaths() {
         }
 
     });
+    //TODO undocumented
+    app.get('/api/v1/account/amIAdmin', (req, res) => {
+
+
+        if (req.query.session) {
+
+            session.getUserUUID(req.query.session,(uuid)=> {
+                if(uuid) {
+
+                    account.isUserAdmin(req.query.uuid).then((admin) => {
+                        res.send(JSON.stringify({isAdmin: admin}));
+                    });
+
+                }else {
+                    res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+                }
+            })
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+
+    });
 
     app.get('/api/v1/account/getSettings', (req, res) => {
 
