@@ -19,9 +19,10 @@ module.exports.init = function initSessionPaths() {
 
 
     app.post('/api/v1/auth/signin', (req, res) => {
-
+        //TODO sessionTime is undocumented
         if (req.body.eorn && req.body.password) {
-            account.login(req.body.eorn.toString(), req.body.password.toString()).then((returnValue) => {
+            console.log(req.body.sessionTime)
+            account.login(req.body.eorn.toString(), req.body.password.toString(),req.body.sessionTime?req.body.sessionTime:undefined).then((returnValue) => {
                 res.send(returnValue);
             });
         } else {
@@ -99,8 +100,17 @@ module.exports.init = function initSessionPaths() {
 
     });
 
-}
 
+
+    setInterval(deleteSessions, 1000 * 60 * 2);
+
+}
+function deleteSessions() {
+    var sql = `delete from session where (timeout < now() and (token = 0))`;
+    global.connection.query(sql, function (err, result) {
+        if (err) throw err;
+    });
+}
 function validateEmail(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());

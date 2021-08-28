@@ -33,7 +33,7 @@ var account = {
         }));
     },
 
-    login: function (nameOrEmail, password) {
+    login: function (nameOrEmail, password,sessionTime) {
 
         return new Promise(resolve => {
 
@@ -46,7 +46,7 @@ var account = {
             global.connection.query(sql, [nameOrEmail, nameOrEmail, pw_hash], function (err, result) {
                 if (result && result[0]) {
 
-                    resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(result[0].uuid)}\"}`);
+                    resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(result[0].uuid,sessionTime)}\"}`);
 
                 } else {
                     resolve('{\"error\":\"email or password incorrect\",\"errorcode\":\"003\"}');

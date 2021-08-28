@@ -54,7 +54,6 @@ module.exports.init = function initAccountPaths() {
         }
 
     });
-    //TODO undocumented
     app.get('/api/v1/account/amIAdmin', (req, res) => {
 
 
