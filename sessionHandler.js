@@ -19,9 +19,15 @@ module.exports.init = function initSessionPaths() {
 
 
     app.post('/api/v1/auth/signin', (req, res) => {
-        //TODO sessionTime is undocumented
+        //TODO sessionTime is undocumented in signin
         if (req.body.eorn && req.body.password) {
-            console.log(req.body.sessionTime)
+            if(req.body.sessionTime) {
+                if(req.body.sessionTime>(60*24*14)&&req.body.sessionTime>10) {
+                    res.send('{\"error\":\"session time is too long or too short\",\"errorcode\":\"012\"}');
+                    return;
+                }
+            }
+
             account.login(req.body.eorn.toString(), req.body.password.toString(),req.body.sessionTime?req.body.sessionTime:undefined).then((returnValue) => {
                 res.send(returnValue);
             });
