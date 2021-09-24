@@ -128,7 +128,23 @@ var account = {
              resolve();
          });
      })
-    }
+    },
+
+    //true if username is available
+     checkUsernameExisting: function(name) {
+
+     return new Promise((resolve) => {
+        const sql = `SELECT 1
+                   FROM account
+                   WHERE name = '${name.toString()}';`;
+        global.connection.query(sql, function (err, result) {
+            if (err) throw err;
+                resolve(result[0]!==undefined);
+        });
+
+    })
+
+}
 };
 
 module.exports = account;

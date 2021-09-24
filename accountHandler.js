@@ -119,12 +119,19 @@ module.exports.init = function initAccountPaths() {
                     session.reactivateSession(req.body.session);
                     session.getUserUUID(req.body.session.toString(), (uuid) => {
                         if (uuid) {
+                            account.checkUsernameExisting(req.body.newUsername.toString()).then(available => {
+                                if(available) {
+                                    account.changeUsername(uuid,req.body.newUsername.toString()).then(()=> {
+                                        res.json({
+                                            success: true
+                                        })
+                                    })
+                                }else{
+                                    res.send('{\"error\":\"Username already exists\",\"errorcode\":\"004\"}');
+                                }
 
-                            account.changeUsername(uuid,req.body.newUsername.toString()).then(()=> {
-                                res.json({
-                                    success: true
-                                })
                             })
+
 
                         } else {
                             res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
