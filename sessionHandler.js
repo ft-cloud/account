@@ -128,7 +128,7 @@ function validateSignUp(name, email, password) {
         if (name.toString().trim() != '' && password.toString().trim() != '' && email.toString().trim() != '') {
             if (validateEmail(email.toString())) {
 
-                if (name.toString().trim().length >= 3) {
+                if (name.toString().trim().length >= 3&&name.toString().length<=25) {
 
 
                     return undefined;

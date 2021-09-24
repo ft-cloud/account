@@ -118,9 +118,17 @@ var account = {
         });
 
 
+    },
+
+
+    changeUsername(uuid, newUserName) {
+     return new Promise((resolve,reject) => {
+         const sql = `UPDATE account SET name = ? WHERE uuid = ?`
+         global.connection.query(sql, [newUserName,uuid.toString()], function (err, result) {
+             resolve();
+         });
+     })
     }
-
-
 };
 
 module.exports = account;
