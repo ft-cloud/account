@@ -136,10 +136,10 @@ var account = {
      return new Promise((resolve) => {
         const sql = `SELECT 1
                    FROM account
-                   WHERE name = '${name.toString()}';`;
-        global.connection.query(sql, function (err, result) {
+                   WHERE name = ?`;
+        global.connection.query(sql,[name.toString()], function (err, result) {
             if (err) throw err;
-                resolve(result[0]!==undefined);
+            resolve(result[0]===undefined);
         });
 
     })
