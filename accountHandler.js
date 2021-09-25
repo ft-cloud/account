@@ -113,7 +113,8 @@ module.exports.init = function initAccountPaths() {
     app.post("/api/v1/account/changeUsername",(req,res) => {
 
         if (req.body.session&&req.body.newUsername) {
-            if(req.body.newUsername.toString().trim().length>=3||req.body.newUsername.toString().length<=25) {
+            console.log(req.body.newUsername.toString().trim().length)
+            if(req.body.newUsername.toString().trim().length>=3&&req.body.newUsername.toString().length<=25) {
             session.validateSession(req.body.session.toString(), (isValid) => {
                 if (isValid) {
                     session.reactivateSession(req.body.session);
