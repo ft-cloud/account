@@ -110,7 +110,7 @@ module.exports.init = function initAccountPaths() {
 
     });
     app.post("/api/v1/account/changeSetting",(req,res)=> {
-        if (req.body.session&&req.body.key&&req.body.newValue) {
+        if (req.body.session&&req.body.key.toString()&&req.body.newValue.toString()) {
                 session.validateSession(req.body.session.toString(), (isValid) => {
                     if (isValid) {
                         session.reactivateSession(req.body.session);
