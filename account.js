@@ -144,7 +144,18 @@ var account = {
 
     })
 
-}
+},
+    storeAccountSettings(uuid, settings) {
+        return new Promise((resolve, reject) => {
+            const sql = `UPDATE account SET settings = ? WHERE uuid = ?`
+            global.connection.query(sql,[settings.toString(),uuid], function (err, result) {
+                if (err) throw err;
+                resolve();
+            });
+
+
+        })
+    }
 };
 
 module.exports = account;

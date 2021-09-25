@@ -109,48 +109,84 @@ module.exports.init = function initAccountPaths() {
         }
 
     });
+    app.post("/api/v1/account/changeSetting",(req,res)=> {
+        if (req.body.session&&req.body.key&&req.body.newValue) {
+                session.validateSession(req.body.session.toString(), (isValid) => {
+                    if (isValid) {
+                        session.reactivateSession(req.body.session);
+                        session.getUserUUID(req.body.session.toString(), (uuid) => {
+                            if (uuid) {
+                                account.getAccountSettings(uuid,settings=> {
+                                    const parsedSettings = JSON.parse(settings);
+                                    parsedSettings[req.body.key] = req.body.newValue;
 
-    app.post("/api/v1/account/changeUsername",(req,res) => {
-
-        if (req.body.session&&req.body.newUsername) {
-            console.log(req.body.newUsername.toString().trim().length)
-            if(req.body.newUsername.toString().trim().length>=3&&req.body.newUsername.toString().length<=25) {
-            session.validateSession(req.body.session.toString(), (isValid) => {
-                if (isValid) {
-                    session.reactivateSession(req.body.session);
-                    session.getUserUUID(req.body.session.toString(), (uuid) => {
-                        if (uuid) {
-                            account.checkUsernameExisting(req.body.newUsername.toString()).then(available => {
-                                if(available) {
-                                    account.changeUsername(uuid,req.body.newUsername.toString()).then(()=> {
+                                    account.storeAccountSettings(uuid,JSON.stringify(parsedSettings)).then(()=> {
                                         res.json({
                                             success: true
                                         })
                                     })
-                                }else{
-                                    res.send('{\"error\":\"Username already exists\",\"errorcode\":\"004\"}');
-                                }
+                                })
+                            } else {
+                                res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
 
-                            })
+                            }
+                        });
 
+                    } else {
+                        res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
 
-                        } else {
-                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
-
-                        }
-                    });
-
-                } else {
-                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
-
-                }
-            });
-        }else {
-        res.send('{\"error\":\"Username must contain at least 3 Characters\",\"errorcode\":\"002\"}');
-        }
+                    }
+                });
         } else {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
     })
+
+
+
+
+
+    app.post("/api/v1/account/changeUsername",(req,res) => {
+
+        if (req.body.session&&req.body.newUsername) {
+            if(req.body.newUsername.toString().trim().length>=3&&req.body.newUsername.toString().length<=25) {
+                session.validateSession(req.body.session.toString(), (isValid) => {
+                    if (isValid) {
+                        session.reactivateSession(req.body.session);
+                        session.getUserUUID(req.body.session.toString(), (uuid) => {
+                            if (uuid) {
+                                account.checkUsernameExisting(req.body.newUsername.toString()).then(available => {
+                                    if(available) {
+                                        account.changeUsername(uuid,req.body.newUsername.toString()).then(()=> {
+                                            res.json({
+                                                success: true
+                                            })
+                                        })
+                                    }else{
+                                        res.send('{\"error\":\"Username already exists\",\"errorcode\":\"004\"}');
+                                    }
+
+                                })
+
+
+                            } else {
+                                res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                            }
+                        });
+
+                    } else {
+                        res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                    }
+                });
+            }else {
+                res.send('{\"error\":\"Username must contain at least 3 Characters\",\"errorcode\":\"002\"}');
+            }
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    })
+
 
 };
