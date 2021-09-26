@@ -188,5 +188,68 @@ module.exports.init = function initAccountPaths() {
         }
     })
 
+    app.post("/api/v1/account/changeAuth",(req,res)=> {
+        if (req.body.session&&req.body.key.toString()&&req.body.newValue.toString()) {
+            session.validateSession(req.body.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.body.session);
+                    session.getUserUUID(req.body.session.toString(), (uuid) => {
+                        if (uuid) {
+                            account.getAccountAuth(uuid,settings=> {
+                                const parsedSettings = JSON.parse(settings);
+                                parsedSettings[req.body.key] = req.body.newValue;
+
+                                account.storeAccountAuth(uuid,JSON.stringify(parsedSettings)).then(()=> {
+                                    res.json({
+                                        success: true
+                                    })
+                                })
+                            })
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    })
+    app.get('/api/v1/account/getAuth', (req, res) => {
+
+        if (req.query.session) {
+            session.validateSession(req.query.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.query.session);
+                    session.getUserUUID(req.query.session.toString(), (uuid) => {
+
+                        if (uuid) {
+                            account.getAccountAuth(uuid, (settings) => {
+                                if (settings) {
+                                    res.send(settings);
+                                } else {
+                                    res.send();
+                                }
+                            });
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+
+    });
 
 };

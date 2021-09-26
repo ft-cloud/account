@@ -155,6 +155,38 @@ var account = {
 
 
         })
+    },
+
+    getAccountAuth: function (uuid, callback) {
+        var sql = `SELECT auth
+                   FROM account
+                   WHERE uuid = ?;`;
+        global.connection.query(sql, [uuid.toString()], function (err, result) {
+
+            if (result && result[0]) {
+                callback(result[0].settings);
+
+            } else {
+
+                callback(undefined);
+
+            }
+
+
+        });
+
+
+    },
+    storeAccountAuth(uuid, settings) {
+        return new Promise((resolve, reject) => {
+            const sql = `UPDATE account SET auth = ? WHERE uuid = ?`
+            global.connection.query(sql,[settings.toString(),uuid], function (err, result) {
+                if (err) throw err;
+                resolve();
+            });
+
+
+        })
     }
 };
 
