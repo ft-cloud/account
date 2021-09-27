@@ -105,17 +105,51 @@ module.exports.init = function initSessionPaths() {
         }
 
     });
+    /*
+    //TODO here we have to find the account by google email or directly by token. In the current database structure that is very complicated because all oauth methods are stored in just one field and because we have a sql database that can be very slow
+    app.get('/api/v1/auth/startSessionWithGoogle', (req, res) => {
 
+        if (req.query.session) {
+            session.validateSession(req.query.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.query.session);
+                    session.getUserUUID(req.query.session.toString(), (uuid) => {
+
+                        if (uuid) {
+                            account.getAccountAuth(uuid, (settings) => {
+                                const parsedSettings =JSON.parse(settings);
+                                if (parsedSettings.googleToken) {
+
+                                } else {
+                                    res.send('{\"error\":\"No Google-Account Link\",\"errorcode\":\"013\"}');
+                                }
+                            });
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+
+    });
+
+     */
 
 
     setInterval(deleteSessions, 1000 * 60 * 2);
 
 }
 function deleteSessions() {
-    var sql = `delete from session where (timeout < now() and (token = 0))`;
-    global.connection.query(sql, function (err, result) {
-        if (err) throw err;
-    });
+    const session = global.database.collection("session");
+    session.deleteOne({isToken: {$ne: true},timeout: {$lte: Date.now()}})
+
 }
 function validateEmail(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;

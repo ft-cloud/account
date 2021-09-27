@@ -11,23 +11,23 @@ var account = {
 
         return new Promise((resolve => {
 
-            var sql = `SELECT *
-                       FROM account
-                       WHERE name = ?;`;
-            global.connection.query(sql, [name.toString()], function (err, result) {
-                if (result[0]) {
 
-                    resolve('{\"error\":\"Username already exists\",\"errorcode\":\"004\"}');
-                } else {
+            const account = global.database.collection("account");
+            const query = {username: {$regex: name, $options: 'i'}}
 
-                    checkUserEmailExisting(email, password, name).then((returnValue) => {
-                        resolve(returnValue);
-                    });
-
-                }
-
-
+            account.findOne(query).then(result=> {
+               console.log(result);
+               if(result===null){
+                   checkUserEmailExisting(email, password, name).then((returnValue) => {
+                       resolve(returnValue);
+                   });
+               }else{
+                   resolve('{\"error\":\"Username already exists\",\"errorcode\":\"004\"}');
+               }
             });
+
+
+
 
 
         }));
@@ -38,37 +38,31 @@ var account = {
         return new Promise(resolve => {
 
             const pw_hash = crypto.createHmac('sha256', hashingSecret).update(password).digest('hex');
+            const account = global.database.collection("account");
+            account.findOne({$or: [{name: {$regex: nameOrEmail, $options: 'i'}},{email:{$regex: nameOrEmail, $options: 'i'}}],password: pw_hash}).then(user=>{
+                if(user!==null) {
 
-            var sql = `SELECT *
-                   FROM account
-                   WHERE (name = ? OR email = ?)
-                     AND password = ?`;
-            global.connection.query(sql, [nameOrEmail, nameOrEmail, pw_hash], function (err, result) {
-                if (result && result[0]) {
-
-                    resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(result[0].uuid,sessionTime)}\"}`);
+                    resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(user.uuid,sessionTime)}\"}`);
 
                 } else {
                     resolve('{\"error\":\"email or password incorrect\",\"errorcode\":\"003\"}');
 
 
                 }
+            })
 
-
-            });
 
         })
 
     },
     isUserAdmin: function (uuid) {
         return new Promise((resolve, reject) => {
-            var sql = `SELECT admin
-                   FROM account
-                   WHERE uuid = ?`;
-            global.connection.query(sql, [uuid], function (err, result) {
-                console.log(result);
-                resolve(result[0].admin);
-            });
+            const account = global.database.collection("account");
+            account.findOne({uuid:uuid}).then(user=>{
+                if(user!==null) {
+                    resolve(user.admin)
+                }
+            })
         })
 
 
@@ -77,45 +71,29 @@ var account = {
 
     getAccountByUUID: function (uuid) {
         return new Promise((resolve, reject) => {
-
-            var sql = `SELECT uuid, name, created_at, installedApps
-                   FROM account
-                   WHERE uuid = ?;`;
-            global.connection.query(sql, [uuid.toString()], function (err, result) {
-
-                if (result && result[0]) {
-                    resolve(result[0]);
-
-                } else {
-
-                    resolve(undefined);
-
+            const account = global.database.collection("account");
+            account.findOne({uuid:uuid}).then(res=>{
+                if(res!==null) {
+                    const result = (({uuid,name,created_at,installedApps})=>({uuid,name,created_at,installedApps}))(res);
+                    resolve(result)
                 }
-
-
-            });
+            })
 
 
         })
 
     },
     getAccountSettings: function (uuid, callback) {
-        var sql = `SELECT settings
-                   FROM account
-                   WHERE uuid = ?;`;
-        global.connection.query(sql, [uuid.toString()], function (err, result) {
-
-            if (result && result[0]) {
-                callback(result[0].settings);
-
-            } else {
-
-                callback(undefined);
+        const account = global.database.collection("account");
+        account.findOne({uuid:uuid}).then(res=>{
+            if(res!==null&&res.settings!=null) {
+                callback(res.settings);
+            }else{
+                callback("{}");
 
             }
+        })
 
-
-        });
 
 
     },
@@ -123,10 +101,12 @@ var account = {
 
     changeUsername(uuid, newUserName) {
      return new Promise((resolve,reject) => {
-         const sql = `UPDATE account SET name = ? WHERE uuid = ?`
-         global.connection.query(sql, [newUserName,uuid.toString()], function (err, result) {
+         const account = global.database.collection("account");
+         account.updateOne({uuid:uuid},{$set:{name:newUserName}}).then(()=>{
              resolve();
-         });
+
+         })
+
      })
     },
 
@@ -134,30 +114,39 @@ var account = {
      checkUsernameExisting: function(name) {
 
      return new Promise((resolve) => {
-        const sql = `SELECT 1
-                   FROM account
-                   WHERE name = ?`;
-        global.connection.query(sql,[name.toString()], function (err, result) {
-            if (err) throw err;
-            resolve(result[0]===undefined);
-        });
+         const account = global.database.collection("account");
+         account.findOne({name: {$regex: name, $options: 'i'}}).then(res=> {
+             if(res===null) {
+                 resolve(true);
+             }else{
+                 resolve(false);
+             }
+         })
 
     })
 
 },
     storeAccountSettings(uuid, settings) {
         return new Promise((resolve, reject) => {
-            const sql = `UPDATE account SET settings = ? WHERE uuid = ?`
-            global.connection.query(sql,[settings.toString(),uuid], function (err, result) {
-                if (err) throw err;
-                resolve();
-            });
-
+            const account = global.database.collection("account");
+            const filter = {
+                uuid: uuid
+            }
+            const updateDoc = {
+                $set: {
+                    settings: settings
+                }
+            }
+           account.updateOne(filter,updateDoc,{upsert: false}).then(()=>{
+               resolve();
+           });
 
         })
     },
 
     getAccountAuth: function (uuid, callback) {
+        //TODO
+        /*
         var sql = `SELECT auth
                    FROM account
                    WHERE uuid = ?;`;
@@ -175,10 +164,19 @@ var account = {
 
         });
 
+         */
+
 
     },
     storeAccountAuth(uuid, settings) {
-        return new Promise((resolve, reject) => {
+        //TODO
+        /*return new Promise((resolve, reject) => {
+            const account = global.database.collection("account");
+            const filter = {
+                uuid: uuid
+            }
+            const
+
             const sql = `UPDATE account SET auth = ? WHERE uuid = ?`
             global.connection.query(sql,[settings.toString(),uuid], function (err, result) {
                 if (err) throw err;
@@ -187,7 +185,11 @@ var account = {
 
 
         })
+
+         */
     }
+
+
 };
 
 module.exports = account;
@@ -196,25 +198,19 @@ module.exports = account;
 function checkUserEmailExisting(email,password,name) {
 
     return new Promise((resolve) => {
-        var sql = `SELECT 1
-                   FROM account
-                   WHERE email = '${email.toString()}';`;
-
-        global.connection.query(sql, function (err, result) {
-            if (err) throw err;
-
-            if (result[0]) {
-                resolve('{\"error\":\"Email already exists\",\"errorcode\":\"005\"}')
-            } else {
+        const account = global.database.collection("account");
+        account.findOne({email: {$regex: email, $options: 'i'}}).then((user) => {
+            if(user===null) {
                 createUser(password,name,email).then((returnValue) => {
                     resolve(returnValue)
                 });
 
-
+            }else{
+                resolve('{\"error\":\"Email already exists\",\"errorcode\":\"005\"}')
             }
+        })
 
 
-        });
 
     })
 
@@ -225,13 +221,18 @@ function createUser(password,name,email) {
 
         const pw_hash = crypto.createHmac('sha256', hashingSecret).update(password.toString()).digest('hex');
 
-        const user = uuid.v4();
-        var sql = `INSERT INTO account (uuid, email, password, name)
-                   VALUES ('${user}', '${email.toString()}', '${pw_hash}', '${name.toString()}')`;
-        global.connection.query(sql, function (err, result) {
-            if (err) throw err;
-        });
-        resolve(`{\"success\":\"Account creating done\",\"session\":\"${session.startsession(user)}\"}`)
+        const userUUID = uuid.v4();
+        const account = global.database.collection("account");
+        const user = {
+            uuid: userUUID,
+            email: email,
+            password: pw_hash,
+            name: name
+        }
+
+        account.insertOne(user);
+
+        resolve(`{\"success\":\"Account creating done\",\"session\":\"${session.startsession(user.uuid)}\"}`)
 
     })
 
