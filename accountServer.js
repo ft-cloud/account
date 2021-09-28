@@ -3,7 +3,6 @@ const app = express();
 module.exports.app = app;
 
 const cors = require('cors');
-const mysql = require('mysql');
 const { MongoClient } = require("mongodb");
 const uri = `mongodb://root:${process.env.MYSQL_ROOT_PASSWORD}@mongo:27017/?authSource=admin&readPreference=primary&directConnection=true&ssl=false`
 const client = new MongoClient(uri);
@@ -19,20 +18,13 @@ const sessionHandler = require("./sessionHandler");
 const account = require("./account");
 
 
-global.connection = mysql.createConnection({
-    host: 'database',
-    user: 'root',
-    password: process.env.MYSQL_ROOT_PASSWORD,
-    database: "cloud",
-    connectTimeout: 5000
-});
+
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 
 
-global.connection.connect();
 
 
 app.use(cors());
