@@ -89,8 +89,7 @@ var account = {
             if(res!==null&&res.settings!=null) {
                 callback(res.settings);
             }else{
-                callback("{}");
-
+                callback({});
             }
         })
 
@@ -127,6 +126,7 @@ var account = {
 
 },
     storeAccountSettings(uuid, settings) {
+
         return new Promise((resolve, reject) => {
             const account = global.database.collection("account");
             const filter = {
