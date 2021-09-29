@@ -13,11 +13,10 @@ var account = {
 
 
             const account = global.database.collection("account");
-            const query = {username: {$regex: name, $options: 'i'}}
+            const query = {name: {$regex: name, $options: 'i'}}
 
             account.findOne(query).then(result=> {
-               console.log(result);
-               if(result===null){
+               if(result==null){
                    checkUserEmailExisting(email, password, name).then((returnValue) => {
                        resolve(returnValue);
                    });
