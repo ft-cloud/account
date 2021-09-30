@@ -97,7 +97,7 @@ var account = {
     },
 
 
-    changeUsername(uuid, newUserName) {
+    changeUsername: function(uuid, newUserName) {
      return new Promise((resolve,reject) => {
          const account = global.database.collection("account");
          account.updateOne({uuid:uuid},{$set:{name:newUserName}}).then(()=>{
@@ -124,7 +124,7 @@ var account = {
     })
 
 },
-    storeAccountSettings(uuid, settings) {
+    storeAccountSettings: function(uuid, settings) {
 
         return new Promise((resolve, reject) => {
             const account = global.database.collection("account");
@@ -167,7 +167,7 @@ var account = {
 
 
     },
-    storeAccountAuth(uuid, settings) {
+    storeAccountAuth: function (uuid, settings) {
         //TODO
         /*return new Promise((resolve, reject) => {
             const account = global.database.collection("account");
@@ -186,8 +186,64 @@ var account = {
         })
 
          */
-    }
+    },
 
+    setGoogleAccountDetails: function(uuid,googleAccountDetails) {
+        return new Promise((resolve, reject)=> {
+            const account = global.database.collection("account");
+            console.log(googleAccountDetails);
+            account.updateOne({uuid: uuid}, {$set: {googleDetails: googleAccountDetails}});
+            resolve();
+        });
+
+    },
+    setGoogleToken: function(uuid, googleid,googleDetails) {
+        return new Promise((resolve, reject)=>{
+            const account = global.database.collection("account");
+            account.updateOne({uuid:uuid},{$set:{googleid:googleid,googleDetails:googleDetails}}).then(()=>{
+                resolve();
+            })
+        })
+    },
+
+
+
+    /**
+     * Never send this result to the client
+     * @param uuid
+     * @returns {Promise<unknown>}
+     */
+    getGoogleToken: function(uuid) {
+        return new Promise((resolve, reject)=>{
+            const account = global.database.collection("account");
+            account.findOne({uuid:uuid}).then(accountResult => {
+                if(accountResult!=null&&accountResult.googleid!=null&&accountResult.googleDetails!=null) {
+
+                    resolve({googleid:accountResult.googleid,googleDetails:accountResult.googleDetails});
+                }else{
+                    resolve({googleid: -1,googleDetails: {}});
+                }
+
+
+            })
+
+        })
+    },
+
+    getAccountByGoogleID: function(googleAccount) {
+        return new Promise((resolve,reject)=>{
+            console.log(googleAccount.sub)
+            const account = global.database.collection("account");
+            account.findOne({googleid:googleAccount.sub}).then(accountResult => {
+                if(accountResult!=null) {
+                    resolve(accountResult);
+                }else{
+                    resolve(undefined);
+                }
+
+            });
+        })
+    }
 
 };
 

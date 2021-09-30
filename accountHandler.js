@@ -2,6 +2,7 @@ var account = require('./account');
 var session = require('sessionlib/session');
 
 const {app} = require('./accountServer.js');
+const axios = require("axios");
 
 
 module.exports.init = function initAccountPaths() {
@@ -110,7 +111,7 @@ module.exports.init = function initAccountPaths() {
 
     });
     app.post("/api/v1/account/changeSetting",(req,res)=> {
-        if (req.body.session&&req.body.key.toString()&&req.body.newValue.toString()) {
+        if (req.body.session&&req.body.key&&req.body.newValue) {
                 session.validateSession(req.body.session.toString(), (isValid) => {
                     if (isValid) {
                         session.reactivateSession(req.body.session);
@@ -188,22 +189,33 @@ module.exports.init = function initAccountPaths() {
     })
 
     app.post("/api/v1/account/changeGoogleAuth",(req,res)=> {
-        if (req.body.session&&req.body.token.toString()) {
+        if (req.body.session&&req.body.token) {
             session.validateSession(req.body.session.toString(), (isValid) => {
                 if (isValid) {
                     session.reactivateSession(req.body.session);
                     session.getUserUUID(req.body.session.toString(), (uuid) => {
                         if (uuid) {
-                            account.getAccountAuth(uuid,settings=> {
-                                const parsedSettings = JSON.parse(settings);
-                                parsedSettings.googleToken = req.body.token;
 
-                                account.storeAccountAuth(uuid,JSON.stringify(parsedSettings)).then(()=> {
-                                    res.json({
-                                        success: true
+                            axios(`https://oauth2.googleapis.com/tokeninfo?id_token=${req.body.token.toString()}`).then(response => {
+                                if(!response.data.error&&response.data.aud==="213041413684-upirs2j8p9ute8tjohkd1bqpnrqv49h8.apps.googleusercontent.com") {
+
+                                    account.setGoogleToken(uuid,response.data.sub,response.data).then(()=>{
+                                        res.json({success:true})
                                     })
-                                })
-                            })
+                                }else{
+                                    res.send('{\"error\":\"No valid google token!\",\"errorcode\":\"014\"}');
+
+
+                                }
+
+                            }).catch((error)=>{
+                                res.send('{\"error\":\"No valid google token!\",\"errorcode\":\"014\"}');
+
+                            });
+
+
+
+
                         } else {
                             res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
 
@@ -219,6 +231,74 @@ module.exports.init = function initAccountPaths() {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
     })
+
+    app.post("/api/v1/account/deleteGoogleAuth",(req,res)=> {
+        if (req.body.session) {
+            session.validateSession(req.body.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.body.session);
+                    session.getUserUUID(req.body.session.toString(), (uuid) => {
+                        if (uuid) {
+
+                                    account.setGoogleToken(uuid,"-1",{}).then(()=>{
+                                        res.json({success:true})
+                                    })
+
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    })
+
+    app.get("/api/v1/account/checkGoogleAuth",(req,res)=> {
+        if (req.query.session) {
+            session.validateSession(req.query.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.query.session);
+                    session.getUserUUID(req.query.session.toString(), (uuid) => {
+                        if (uuid) {
+                            account.getGoogleToken(uuid).then(token => {
+
+                                if(token.googleid!=="-1") {
+                                    res.json({valid: true,googleResponse: token.googleDetails})
+
+                                }else{
+                                    res.json({valid: false})
+
+                                }
+                               /*
+
+
+
+                                */
+
+                            });
+
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    })
+
 
 
 };

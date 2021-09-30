@@ -1,6 +1,7 @@
 const {app} = require('./accountServer.js');
 const session = require('sessionlib/session');
 const account = require('./account')
+const axios = require("axios");
 
 module.exports.init = function initSessionPaths() {
 
@@ -105,42 +106,43 @@ module.exports.init = function initSessionPaths() {
         }
 
     });
-    /*
-    //TODO here we have to find the account by google email or directly by token. In the current database structure that is very complicated because all oauth methods are stored in just one field and because we have a sql database that can be very slow
-    app.get('/api/v1/auth/startSessionWithGoogle', (req, res) => {
 
-        if (req.query.session) {
-            session.validateSession(req.query.session.toString(), (isValid) => {
-                if (isValid) {
-                    session.reactivateSession(req.query.session);
-                    session.getUserUUID(req.query.session.toString(), (uuid) => {
+  app.post('/api/v1/auth/startSessionWithGoogle', (req, res) => {
 
-                        if (uuid) {
-                            account.getAccountAuth(uuid, (settings) => {
-                                const parsedSettings =JSON.parse(settings);
-                                if (parsedSettings.googleToken) {
+        if (req.body.token) {
+            axios(`https://oauth2.googleapis.com/tokeninfo?id_token=${req.body.token}`).then(response => {
+                if(!response.data.error&&response.data.aud==="213041413684-upirs2j8p9ute8tjohkd1bqpnrqv49h8.apps.googleusercontent.com") {
 
-                                } else {
-                                    res.send('{\"error\":\"No Google-Account Link\",\"errorcode\":\"013\"}');
-                                }
-                            });
-                        } else {
-                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+                    account.getAccountByGoogleID(response.data).then((accountResult)=>{
+                        if(accountResult!==undefined) {
+                            account.setGoogleAccountDetails(accountResult.uuid, response.data).then(r =>{});
+                            const sessionUUID = session.startsession(accountResult.uuid,60);
+                            res.json({session: sessionUUID,success:true});
+                        }else{
+                            res.send('{\"error\":\"No Google-Account Link\",\"errorcode\":\"013\"}');
+
                         }
-                    });
+                    })
 
-                } else {
-                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+                }else{
+                    res.send('{\"error\":\"No valid google token!\",\"errorcode\":\"014\"}');
+
 
                 }
+
+            }).catch((error)=>{
+                res.json({valid: false})
             });
+
+
+
         } else {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
 
     });
 
-     */
+
 
 
     setInterval(deleteSessions, 1000 * 60 * 2);
