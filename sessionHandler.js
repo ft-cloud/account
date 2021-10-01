@@ -106,7 +106,7 @@ module.exports.init = function initSessionPaths() {
         }
 
     });
-
+/*
   app.post('/api/v1/auth/startSessionWithGoogle', (req, res) => {
 
         if (req.body.token) {
@@ -144,6 +144,8 @@ module.exports.init = function initSessionPaths() {
 
 
 
+
+ */
 
     setInterval(deleteSessions, 1000 * 60 * 2);
 

@@ -187,7 +187,7 @@ module.exports.init = function initAccountPaths() {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
     })
-
+/*
     app.post("/api/v1/account/changeGoogleAuth",(req,res)=> {
         if (req.body.session&&req.body.token) {
             session.validateSession(req.body.session.toString(), (isValid) => {
@@ -276,11 +276,7 @@ module.exports.init = function initAccountPaths() {
                                     res.json({valid: false})
 
                                 }
-                               /*
 
-
-
-                                */
 
                             });
 
@@ -298,7 +294,6 @@ module.exports.init = function initAccountPaths() {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
     })
-
-
+*/
 
 };
