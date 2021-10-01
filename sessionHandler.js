@@ -21,7 +21,7 @@ module.exports.init = function initSessionPaths() {
 
     app.post('/api/v1/auth/signin', (req, res) => {
         //TODO sessionTime is undocumented in signin
-        if (req.body.eorn && req.body.password) {
+        if (req.body.eorn!=null && req.body.password!=null) {
             if(req.body.sessionTime) {
                 if(req.body.sessionTime>(60*24*14)&&req.body.sessionTime>10) {
                     res.send('{\"error\":\"session time is too long or too short\",\"errorcode\":\"012\"}');
@@ -38,7 +38,7 @@ module.exports.init = function initSessionPaths() {
         }
     });
     app.post('/api/v1/auth/signout', (req, res) => {
-        if (req.body.session) {
+        if (req.body.session!=null) {
             //TODO check permission
             session.deleteSession(req.body.session.toString()).then((returnValue) => {
                 res.send(returnValue);
@@ -52,7 +52,7 @@ module.exports.init = function initSessionPaths() {
     app.get('/api/v1/auth/validateSession', (req, res) => {
 
 
-        if (req.query.session) {
+        if (req.query.session!=null) {
             session.validateSession(req.query.session.toString(), (result) => {
                 if (result) {
                     res.send("{\"success\": true}");
@@ -70,7 +70,7 @@ module.exports.init = function initSessionPaths() {
 
     app.post('/api/v1/auth/addAPIKey', (req, res) => {
 
-        if (req.body.session) {
+        if (req.body.session!=null) {
             session.validateSession(req.body.session.toString(), (isValid) => {
                 if (isValid) {
                     session.reactivateSession(req.body.session);
@@ -164,6 +164,9 @@ function validateSignUp(name, email, password) {
 
     if (name && password && email) {
         if (name.toString().trim() != '' && password.toString().trim() != '' && email.toString().trim() != '') {
+
+            const regex = /[^A-Za-z0-9\s]/;
+            if(!regex.test(name.toString())) {
             if (validateEmail(email.toString())) {
 
                 if (name.toString().trim().length >= 3&&name.toString().length<=25) {
@@ -172,13 +175,17 @@ function validateSignUp(name, email, password) {
                     return undefined;
 
                 } else {
-                    return '{\"error\":\"Username must contain at least 3 Characters\",\"errorcode\":\"002\"}';
+                    return '{\"error\":\"Username must contain at least 3 Characters\",\"errorcode\":\"014\"}';
 
                 }
 
 
             } else {
                 return '{\"error\":\"No valid email!\",\"errorcode\":\"002\"}';
+            }
+            } else {
+                return '{\"error\":\"Invalid Characters\",\"errorcode\":\"013\"}';
+
             }
 
         } else {

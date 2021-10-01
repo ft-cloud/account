@@ -110,7 +110,6 @@ var account = {
 
     //true if username is available
      checkUsernameExisting: function(name) {
-
      return new Promise((resolve) => {
          const account = global.database.collection("account");
          account.findOne({name: {$regex: name, $options: 'i'}}).then(res=> {

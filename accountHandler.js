@@ -10,7 +10,7 @@ module.exports.init = function initAccountPaths() {
 
     app.get('/api/v1/account/info', (req, res) => {
 
-        if (req.query.session) {
+        if (req.query.session!=null) {
             session.validateSession(req.query.session.toString(), (isValid) => {
                 if (isValid) {
                     session.reactivateSession(req.query.session);
@@ -43,7 +43,7 @@ module.exports.init = function initAccountPaths() {
     //TODO undocumented
     app.get('/api/v1/account/isUserAdmin', (req, res) => {
 
-        if (req.query.uuid) {
+        if (req.query.uuid!=null) {
 
             account.isUserAdmin(req.query.uuid).then((admin) => {
                 res.send(JSON.stringify({isAdmin: admin}));
@@ -58,7 +58,7 @@ module.exports.init = function initAccountPaths() {
     app.get('/api/v1/account/amIAdmin', (req, res) => {
 
 
-        if (req.query.session) {
+        if (req.query.session!=null) {
 
             session.getUserUUID(req.query.session,(uuid)=> {
                 if(uuid) {
@@ -81,7 +81,7 @@ module.exports.init = function initAccountPaths() {
 
     app.get('/api/v1/account/getSettings', (req, res) => {
 
-        if (req.query.session) {
+        if (req.query.session!=null) {
             session.validateSession(req.query.session.toString(), (isValid) => {
                 if (isValid) {
                     session.reactivateSession(req.query.session);
@@ -111,7 +111,7 @@ module.exports.init = function initAccountPaths() {
 
     });
     app.post("/api/v1/account/changeSetting",(req,res)=> {
-        if (req.body.session&&req.body.key&&req.body.newValue) {
+        if (req.body.session!=null&&req.body.key!=null&&req.body.newValue!=null) {
                 session.validateSession(req.body.session.toString(), (isValid) => {
                     if (isValid) {
                         session.reactivateSession(req.body.session);
@@ -148,8 +148,10 @@ module.exports.init = function initAccountPaths() {
 
     app.post("/api/v1/account/changeUsername",(req,res) => {
 
-        if (req.body.session&&req.body.newUsername) {
+        if (req.body.session!=null&&req.body.newUsername!=null) {
             if(req.body.newUsername.toString().trim().length>=3&&req.body.newUsername.toString().length<=25) {
+                const regex = /[^A-Za-z0-9\s]/;
+                if(!regex.test(req.body.newUsername.toString())) {
                 session.validateSession(req.body.session.toString(), (isValid) => {
                     if (isValid) {
                         session.reactivateSession(req.body.session);
@@ -180,8 +182,12 @@ module.exports.init = function initAccountPaths() {
 
                     }
                 });
+                }else {
+                    res.send('{\"error\":\"Invalid Characters\",\"errorcode\":\"013\"}');
+                }
+
             }else {
-                res.send('{\"error\":\"Username must contain at least 3 Characters\",\"errorcode\":\"002\"}');
+                res.send('{\"error\":\"Username must contain at least 3 Characters\",\"errorcode\":\"014\"}');
             }
         } else {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
