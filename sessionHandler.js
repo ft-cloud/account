@@ -49,6 +49,28 @@ module.exports.init = function initSessionPaths() {
 
     });
 
+
+    app.post("/api/v1/auth/validateStreamKey", (req, res) => {
+
+        if(req.body.apiKey&&req.body.name) {
+
+            session.checkStreamPermission(req.body.name,req.body.apiKey).then(result=>{
+
+                if(result) {
+                    res.status(200).send();
+                }else{
+                    res.status(400).send();
+                }
+
+            });
+
+
+        }else{
+            res.status(400).send();
+        }
+    });
+
+
     app.get('/api/v1/auth/validateSession', (req, res) => {
 
 
