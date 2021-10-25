@@ -7,6 +7,8 @@ module.exports.init = function initSessionPaths() {
 
     app.post('/api/v1/auth/signup', (req, res) => {
 
+
+        //TODO check Password length
         const error = validateSignUp(req.body.name, req.body.email, req.body.password);
         if (error) {
             res.send(error);
@@ -39,7 +41,6 @@ module.exports.init = function initSessionPaths() {
     });
     app.post('/api/v1/auth/signout', (req, res) => {
         if (req.body.session!=null) {
-            //TODO check permission
             session.deleteSession(req.body.session.toString()).then((returnValue) => {
                 res.send(returnValue);
             });
