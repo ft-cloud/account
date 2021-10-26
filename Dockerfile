@@ -1,4 +1,5 @@
-FROM node:latest
+FROM node:latest AS BUILD_IMAGE
+FROM node:17-alpine
 
 COPY ./package*.json /src/
 
