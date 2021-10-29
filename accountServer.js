@@ -10,7 +10,6 @@ const client = new MongoClient(uri);
 client.connect().then(()=> {
     global.database = client.db("cloud");
 
-
 })
 
 const accountHandler = require("./accountHandler");
