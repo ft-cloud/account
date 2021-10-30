@@ -1,5 +1,5 @@
 FROM node:latest AS BUILD_IMAGE
-FROM ubuntu:latest AS BUILD_IMAGE
+FROM ubuntu:latest AS BASE_IMAGE
 FROM node:17-alpine
 
 
