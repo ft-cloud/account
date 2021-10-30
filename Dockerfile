@@ -1,9 +1,12 @@
 FROM node:latest AS BUILD_IMAGE
+FROM ubuntu:latest AS BUILD_IMAGE
 FROM node:17-alpine
 
-COPY ./package.json /src/
 
 WORKDIR /src
+
+COPY ["package.json", "package-lock.json*", "./"]
+
 ARG mode="prod"
 
 RUN ls
