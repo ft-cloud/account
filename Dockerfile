@@ -6,6 +6,8 @@ COPY ./package.json /src/
 WORKDIR /src
 ARG mode="prod"
 
+RUN ls
+
 RUN if [ "${mode}" = "dev" ] ; then npm install ; else npm install --production ; fi
 
 EXPOSE 3000
