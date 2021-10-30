@@ -1,7 +1,7 @@
 FROM node:latest AS BUILD_IMAGE
 FROM node:17-alpine
 
-COPY ./package*.json /src/
+COPY ./package.json /src/
 
 WORKDIR /src
 ARG mode="prod"
