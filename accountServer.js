@@ -1,5 +1,7 @@
 const express = require('express');
 const app = express();
+const cookieParser = require('cookie-parser')
+
 module.exports.app = app;
 
 const cors = require('cors');
@@ -21,6 +23,7 @@ const account = require("./account");
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+app.use(cookieParser())
 
 
 
