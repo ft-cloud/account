@@ -1,11 +1,14 @@
-var account = require('./account');
-var session = require('sessionlib/session');
+import account from "./account.js";
 
-const {app} = require('./accountServer.js');
-const axios = require("axios");
+import {session} from "sessionlib/session.js";
 
+import {app} from "./accountServer.js";
 
-module.exports.init = function initAccountPaths() {
+import axios from "axios";
+
+import qrcode from "qrcode";
+
+export function initAccountPaths() {
 //TODO add info function without session instead uuid of account
 
     app.get('/api/v1/account/info', (req, res) => {
@@ -190,6 +193,61 @@ module.exports.init = function initAccountPaths() {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
     });
+
+
+    app.post("/api/v1/account/enableTOTPAuth", (req, res) => {
+
+        if (req.body.session != null) {
+
+                    session.validateSession(req.body.session.toString(), (isValid) => {
+                        if (isValid) {
+                            session.reactivateSession(req.body.session);
+                            session.getUserUUID(req.body.session.toString(), (uuid) => {
+                                if (uuid) {
+
+
+                                    account.enableTOTPAuth(uuid).then((result) => {
+
+                                        if(result.success) {
+                                            account.getAccountByUUID(uuid).then(accountInfo=>{
+                                                const issuer = 'FT-Cloud';
+                                                const algorithm = 'SHA1';
+                                                const digits = '6';
+                                                const period = '30';
+                                                const otpType = 'totp';
+                                                const configUri = `otpauth://${otpType}/${issuer}:${accountInfo.name}?algorithm=${algorithm}&digits=${digits}&period=${period}&issuer=${issuer}&secret=${result.secret}`;
+
+                                                res.setHeader('Content-Type', 'image/png');
+
+                                                 qrcode.toFileStream(res, configUri);
+                                            })
+
+                                        }else{
+                                            res.status(400).json({error:"TOTP already enabled",errorcode:"018"});
+                                        }
+
+                                    });
+
+
+
+                                } else {
+                                    res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                                }
+                            });
+
+                        } else {
+                            res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    });
+
     /*
         app.post("/api/v1/account/changeGoogleAuth",(req,res)=> {
             if (req.body.session&&req.body.token) {

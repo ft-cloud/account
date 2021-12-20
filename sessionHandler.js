@@ -1,9 +1,12 @@
-const {app} = require('./accountServer.js');
-const session = require('sessionlib/session');
-const account = require('./account')
-const axios = require("axios");
+import {app} from "./accountServer.js";
 
-module.exports.init = function initSessionPaths() {
+import {session} from "sessionlib/session.js";
+
+import account from "./account.js";
+
+import axios from "axios";
+
+export function initSessionPaths() {
 
     app.post('/api/v1/auth/signup', (req, res) => {
 

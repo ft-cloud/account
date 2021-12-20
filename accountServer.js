@@ -1,11 +1,18 @@
-const express = require('express');
-const app = express();
-const cookieParser = require('cookie-parser')
+import express from "express";
 
-module.exports.app = app;
+import cookieParser from "cookie-parser";
 
-const cors = require('cors');
-const { MongoClient } = require("mongodb");
+import cors from "cors";
+
+import {MongoClient} from "mongodb";
+
+import {initAccountPaths} from "./accountHandler.js";
+
+import {initSessionPaths} from "./sessionHandler.js";
+
+
+export const app = express();
+
 const uri = `mongodb://root:${process.env.MYSQL_ROOT_PASSWORD}@mongo:27017/?authSource=admin&readPreference=primary&directConnection=true&ssl=false`
 const client = new MongoClient(uri);
 
@@ -13,14 +20,6 @@ client.connect().then(()=> {
     global.database = client.db("cloud");
 
 })
-
-const accountHandler = require("./accountHandler");
-const sessionHandler = require("./sessionHandler");
-const account = require("./account");
-
-
-
-
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser())
@@ -38,9 +37,9 @@ app.get("/api/v1/auth",(req, res) => {
     res.send(JSON.stringify({microService:"Account"}))
 })
 
+initAccountPaths();
 
-accountHandler.init();
-sessionHandler.init();
+initSessionPaths();
 
 app.listen(3000, () => {
     console.log(`Account app listening at http://localhost:3000`);

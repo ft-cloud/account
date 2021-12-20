@@ -1,10 +1,16 @@
-var uuid = require('uuid');
-const crypto = require('crypto');
+import {v4 as uuidV4} from "uuid";
+import crypto from "crypto";
+
+import {session} from "sessionlib/session.js";
+
+import util from "util";
+
+import base32encode from 'base32-encode'
+
+import {verifyTOTP} from "sessionlib/2fa.js";
+
 const hashingSecret = "LEDWAll";
-const session = require('sessionlib/session');
-
-
-var account = {
+const account = {
 
 
     checkAndCreateUser: function (name, email,password) {
@@ -148,7 +154,7 @@ var account = {
         var sql = `SELECT auth
                    FROM account
                    WHERE uuid = ?;`;
-        global.connection.query(sql, [uuid.toString()], function (err, result) {
+        global.connection.query(sqlmodule.doStuff, [uuid.toString()], function (err, result) {
 
             if (result && result[0]) {
                 callback(result[0].settings);
@@ -207,46 +213,61 @@ var account = {
 
 
 
-    /**
-     * Never send this result to the client
-     * @param uuid
-     * @returns {Promise<unknown>}
-     */
-    getGoogleToken: function(uuid) {
-        return new Promise((resolve, reject)=>{
+
+    enableTOTPAuth(uuid) {
+
+        return new Promise((resolve => {
             const account = global.database.collection("account");
-            account.findOne({uuid:uuid}).then(accountResult => {
-                if(accountResult!=null&&accountResult.googleid!=null&&accountResult.googleDetails!=null) {
+            account.findOne({uuid:uuid}).then(res=>{
+                if(res!==null) {
+                  if(res.TOTPEnabled===true) {
+                      resolve({success:false,message:"TOTP is already enabled"});
+                  }else{
+                      const buffer = crypto.randomBytes(14);
+                      const secret = base32encode(buffer, 'RFC4648',{padding:false});
+                      //set secret but need to be verified
+                      account.updateOne({uuid:uuid},{$set:{ TOTPSecret:secret}}).then(()=>{
+                          resolve({success:true,secret:secret});
+                      })
+                  }
 
-                    resolve({googleid:accountResult.googleid,googleDetails:accountResult.googleDetails});
-                }else{
-                    resolve({googleid: -1,googleDetails: {}});
                 }
-
-
             })
 
-        })
+
+        }))
+
     },
 
-    getAccountByGoogleID: function(googleAccount) {
+    verifyTOTP(uuid,code,enableItOnSuccess=false) {
         return new Promise((resolve,reject)=>{
-            console.log(googleAccount.sub)
             const account = global.database.collection("account");
-            account.findOne({googleid:googleAccount.sub}).then(accountResult => {
-                if(accountResult!=null) {
-                    resolve(accountResult);
+            account.findOne({uuid:uuid}).then(res=>{
+                if(res!==null) {
+                if(res.TOTPSecret==null) {
+                    resolve({success: false, message: "Account has no TOTP secret"});
                 }else{
-                    resolve(undefined);
+                    const secret = res.TOTPSecret;
+
+                    if(verifyTOTP(code,secret)===true) {
+                        if(res.TOTPEnabled===false&&enableItOnSuccess===true) {
+                            account.updateOne({uuid:uuid},{$set:{TOTPEnabled:true}}).then(()=>{
+                            })
+                        }
+                        resolve({success:true});
+                    }else{
+                        resolve({success:false,message:"Invalid TOTP code"});
+                    }
+
                 }
-
-            });
+                }else{
+                    resolve({success:false,message:"Account not found"});
+                }
+            })
         })
-    }
-
+    },
 };
 
-module.exports = account;
 
 
 function checkUserEmailExisting(email,password,name) {
@@ -269,13 +290,14 @@ function checkUserEmailExisting(email,password,name) {
     })
 
 }
+export default account;
 
 function createUser(password,name,email) {
     return new Promise((resolve) => {
 
         const pw_hash = crypto.createHmac('sha256', hashingSecret).update(password.toString()).digest('hex');
 
-        const userUUID = uuid.v4();
+        const userUUID = uuidV4();
         const account = global.database.collection("account");
         const user = {
             uuid: userUUID,
