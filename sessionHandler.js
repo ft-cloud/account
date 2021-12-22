@@ -33,8 +33,7 @@ export function initSessionPaths() {
                     return;
                 }
             }
-
-            account.login(req.body.eorn.toString(), req.body.password.toString(),req.body.sessionTime?req.body.sessionTime:undefined).then((returnValue) => {
+            account.login(req.body.eorn.toString(), req.body.password.toString(),req.body.totpToken!=null?req.body.totpToken.toString():undefined,req.body.sessionTime?req.body.sessionTime:undefined).then((returnValue) => {
                 res.send(returnValue);
             });
         } else {

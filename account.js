@@ -38,7 +38,7 @@ const account = {
         }));
     },
 
-    login: function (nameOrEmail, password,sessionTime) {
+    login: function (nameOrEmail, password,TOTPToken,sessionTime) {
 
         return new Promise(resolve => {
 
@@ -46,8 +46,26 @@ const account = {
             const account = global.database.collection("account");
             account.findOne({$or: [{name: {$regex: nameOrEmail, $options: 'i'}},{email:{$regex: nameOrEmail, $options: 'i'}}],password: pw_hash}).then(user=>{
                 if(user!==null) {
+                    if(user.TOTPEnabled) {
 
-                    resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(user.uuid,sessionTime)}\"}`);
+                        if(TOTPToken!=null) {
+                            this.verifyTOTP(user.uuid, TOTPToken, false).then(result => {
+                                if (result.success === true) {
+                                    resolve(`{\"success\":\"loged in\",\"tokenValid\": true,\"session\":\"${session.startsession(user.uuid, sessionTime)}\"}`);
+                                } else {
+                                    resolve(`{\"error\":\"Token invalid\",\"tokenValid\": false}`);
+
+                                }
+                            })
+
+                        }else{
+                            resolve(`{\"error\":\"TOTP required\",\"totp\": true}`);
+
+                        }
+                    }else{
+                        resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(user.uuid,sessionTime)}\"}`);
+
+                    }
 
                 } else {
                     resolve('{\"error\":\"email or password incorrect\",\"errorcode\":\"003\"}');
@@ -239,6 +257,22 @@ const account = {
 
     },
 
+    isTOTPEnabled(uuid) {
+      return new Promise(resolve =>{
+          const account = global.database.collection("account");
+          account.findOne({uuid:uuid}).then(res=>{
+              if(res!==null) {
+                  if(res.TOTPEnabled===true) {
+                      resolve(true);
+                  }else{
+                      resolve(false);
+                  }
+              }
+          })
+
+      })
+    },
+
     verifyTOTP(uuid,code,enableItOnSuccess=false) {
         return new Promise((resolve,reject)=>{
             const account = global.database.collection("account");
@@ -250,7 +284,7 @@ const account = {
                     const secret = res.TOTPSecret;
 
                     if(verifyTOTP(code,secret)===true) {
-                        if(res.TOTPEnabled===false&&enableItOnSuccess===true) {
+                        if(enableItOnSuccess===true) {
                             account.updateOne({uuid:uuid},{$set:{TOTPEnabled:true}}).then(()=>{
                             })
                         }
@@ -266,6 +300,14 @@ const account = {
             })
         })
     },
+    disableTOTP(uuid) {
+        return new Promise((resolve, reject) => {
+            const account = global.database.collection("account");
+            account.updateOne({uuid:uuid},{$set:{TOTPEnabled:false}}).then(()=>{
+                resolve();
+            })
+        })
+    }
 };
 
 

@@ -195,58 +195,203 @@ export function initAccountPaths() {
     });
 
 
-    app.post("/api/v1/account/enableTOTPAuth", (req, res) => {
+    app.post("/api/v1/account/getTOTPSecret", (req, res) => {
 
         if (req.body.session != null) {
 
-                    session.validateSession(req.body.session.toString(), (isValid) => {
-                        if (isValid) {
-                            session.reactivateSession(req.body.session);
-                            session.getUserUUID(req.body.session.toString(), (uuid) => {
-                                if (uuid) {
+            session.validateSession(req.body.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.body.session);
+                    session.getUserUUID(req.body.session.toString(), (uuid) => {
+                        if (uuid) {
 
 
-                                    account.enableTOTPAuth(uuid).then((result) => {
+                            account.enableTOTPAuth(uuid).then((result) => {
 
-                                        if(result.success) {
-                                            account.getAccountByUUID(uuid).then(accountInfo=>{
-                                                const issuer = 'FT-Cloud';
-                                                const algorithm = 'SHA1';
-                                                const digits = '6';
-                                                const period = '30';
-                                                const otpType = 'totp';
-                                                const configUri = `otpauth://${otpType}/${issuer}:${accountInfo.name}?algorithm=${algorithm}&digits=${digits}&period=${period}&issuer=${issuer}&secret=${result.secret}`;
+                                if (result.success) {
+                                    account.getAccountByUUID(uuid).then(accountInfo => {
+                                        const issuer = 'FT-Cloud';
+                                        const algorithm = 'SHA1';
+                                        const digits = '6';
+                                        const period = '30';
+                                        const otpType = 'totp';
+                                        const configUri = `otpauth://${otpType}/${issuer}:${accountInfo.name}?algorithm=${algorithm}&digits=${digits}&period=${period}&issuer=${issuer}&secret=${result.secret}`;
 
-                                                res.setHeader('Content-Type', 'image/png');
+                                        res.setHeader('Content-Type', 'image/png');
 
-                                                 qrcode.toFileStream(res, configUri);
-                                            })
-
-                                        }else{
-                                            res.status(400).json({error:"TOTP already enabled",errorcode:"018"});
-                                        }
-
+                                        qrcode.toFileStream(res, configUri);
                                     });
 
-
-
                                 } else {
-                                    res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
-
+                                    res.status(400).json({error: "TOTP already enabled", errorcode: "018"});
                                 }
+
                             });
 
+
                         } else {
-                            res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
 
                         }
                     });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
 
 
         } else {
             res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
         }
     });
+
+    app.post("/api/v1/account/enableTOTPAuth", (req, res) => {
+
+        if (req.body.session != null && req.body.verifyToken != null) {
+
+            session.validateSession(req.body.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.body.session);
+                    session.getUserUUID(req.body.session.toString(), (uuid) => {
+                        if (uuid) {
+
+                            account.verifyTOTP(uuid, req.body.verifyToken.toString(), true).then((result) => {
+                                if (result.success) {
+                                    res.status(200).json({success: true, message: "TOTP enabled"});
+                                } else {
+                                    res.status(400).json({error: "Invalid Token", errorcode: "019"});
+                                }
+                            });
+
+
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    });
+
+    app.get("/api/v1/account/verifyTOTP", (req, res) => {
+        //generate a session if token is valid and account has 2fa enabled (somehow)
+        if (req.body.session != null && req.body.token != null) {
+
+            session.validateSession(req.body.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.body.session);
+                    session.getUserUUID(req.body.session.toString(), (uuid) => {
+                        if (uuid) {
+
+
+                            account.verifyTOTP(uuid, req.body.token.toString()).then((result) => {
+                                if (result.success) {
+                                    //todo generate session out of code
+                                    res.status(200).json({success: true, message: "TOTP valid"});
+                                } else {
+                                    res.status(400).json({error: "Invalid Token", errorcode: "019"});
+                                }
+                            });
+
+
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    });
+
+    app.get("/api/v1/account/isTOTPEnabled", (req, res) => {
+        if (req.query.session != null) {
+
+            session.validateSession(req.query.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.query.session);
+                    session.getUserUUID(req.query.session.toString(), (uuid) => {
+                        if (uuid) {
+
+
+                            account.isTOTPEnabled(uuid).then((result) => {
+                                if (result) {
+                                    res.status(200).json({success: true, enabled: true, message: "TOTP enabled"});
+                                } else {
+                                    res.status(200).json({success: true, enabled: false, message: "TOTP disabled"});
+                                }
+                            });
+
+
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    });
+
+    app.get("/api/v1/account/disableTOTP", (req, res) => {
+        if (req.query.session != null) {
+
+            session.validateSession(req.query.session.toString(), (isValid) => {
+                if (isValid) {
+                    session.reactivateSession(req.query.session);
+                    session.getUserUUID(req.query.session.toString(), (uuid) => {
+                        if (uuid) {
+
+                            account.disableTOTP(uuid).then(() => {
+                                res.status(200).json({success: true, message: "TOTP disabled"});
+                            });
+
+
+                        } else {
+                            res.send('{\"error\":\"No valid account!\",\"errorcode\":\"006\"}');
+
+                        }
+                    });
+
+                } else {
+                    res.send('{\"error\":\"No valid session!\",\"errorcode\":\"006\"}');
+
+                }
+            });
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    });
+
 
     /*
         app.post("/api/v1/account/changeGoogleAuth",(req,res)=> {
@@ -357,4 +502,4 @@ export function initAccountPaths() {
         })
     */
 
-};
+}
