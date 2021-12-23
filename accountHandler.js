@@ -195,14 +195,14 @@ export function initAccountPaths() {
     });
 
 
-    app.post("/api/v1/account/getTOTPSecret", (req, res) => {
+    app.get("/api/v1/account/getTOTPSecret", (req, res) => {
 
-        if (req.body.session != null) {
+        if (req.query.session != null) {
 
-            session.validateSession(req.body.session.toString(), (isValid) => {
+            session.validateSession(req.query.session.toString(), (isValid) => {
                 if (isValid) {
-                    session.reactivateSession(req.body.session);
-                    session.getUserUUID(req.body.session.toString(), (uuid) => {
+                    session.reactivateSession(req.query.session);
+                    session.getUserUUID(req.query.session.toString(), (uuid) => {
                         if (uuid) {
 
 
