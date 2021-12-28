@@ -25,7 +25,6 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser())
 
-console.log(process.env.EMAIL_NOREPLY_PASSWORD)
 
 export const transporter = new nodemailer.createTransport({
     host: "smtp.ionos.de",
