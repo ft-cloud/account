@@ -11,7 +11,6 @@ import {initAccountPaths} from "./accountHandler.js";
 import {initSessionPaths} from "./sessionHandler.js";
 import nodemailer from "nodemailer";
 
-
 export const app = express();
 
 const uri = `mongodb://root:${process.env.MYSQL_ROOT_PASSWORD}@mongo:27017/?authSource=admin&readPreference=primary&directConnection=true&ssl=false`
