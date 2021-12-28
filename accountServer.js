@@ -9,6 +9,7 @@ import {MongoClient} from "mongodb";
 import {initAccountPaths} from "./accountHandler.js";
 
 import {initSessionPaths} from "./sessionHandler.js";
+import nodemailer from "nodemailer";
 
 
 export const app = express();
@@ -24,11 +25,23 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser())
 
+console.log(process.env.EMAIL_NOREPLY_PASSWORD)
 
+export const transporter = new nodemailer.createTransport({
+    host: "smtp.ionos.de",
+    port: 465,
+    secure: true,
+    auth: {
+        user: "noreply@rekari.de",
+        pass: process.env.EMAIL_NOREPLY_PASSWORD
+    }
+})
 
 
 
 app.use(cors());
+
+
 
 app.get("/api/v1/account",(req, res) => {
     res.send(JSON.stringify({microService:"Account"}))
@@ -46,6 +59,8 @@ app.listen(3000, () => {
 
 });
 
+
+
 app.use(function (err,req,res,next){
     if (res.headersSent) {
         return next(err);
@@ -59,3 +74,5 @@ app.use(function (err,req,res,next){
 app.use(function (req, res) {
     res.status(404).send('Something went wrong! Microservice: Account');
 });
+
+

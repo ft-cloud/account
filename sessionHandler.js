@@ -53,7 +53,7 @@ export function initSessionPaths() {
     });
 
 
-    app.post("/api/v1/auth/validateStreamKey", (req, res) => {
+  /*  app.post("/api/v1/auth/validateStreamKey", (req, res) => {
 
         if(req.body.apiKey&&req.body.name) {
 
@@ -72,6 +72,8 @@ export function initSessionPaths() {
             res.status(400).send();
         }
     });
+
+   */
 
 
     app.get('/api/v1/auth/validateSession', (req, res) => {
@@ -131,6 +133,10 @@ export function initSessionPaths() {
         }
 
     });
+
+
+
+
 /*
   app.post('/api/v1/auth/startSessionWithGoogle', (req, res) => {
 

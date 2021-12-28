@@ -2,7 +2,7 @@ import account from "./account.js";
 
 import {session} from "sessionlib/session.js";
 
-import {app} from "./accountServer.js";
+import {app,transporter} from "./accountServer.js";
 
 import axios from "axios";
 
@@ -385,6 +385,22 @@ export function initAccountPaths() {
 
                 }
             });
+
+
+        } else {
+            res.send('{\"error\":\"No valid inputs!\",\"errorcode\":\"002\"}');
+        }
+    });
+    app.get("/api/v1/account/verifyEmail", (req, res) => {
+        if (req.query.token != null) {
+
+          account.verifyUserAccount(req.query.token.toString()).then((result) => {
+              if (result) {
+                  res.status(200).json({success: true, message: "Email verified"});
+              } else {
+                  res.status(400).json({error: "Invalid Token", errorcode: "019"});
+              }
+          });
 
 
         } else {

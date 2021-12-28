@@ -8,6 +8,7 @@ import util from "util";
 import base32encode from 'base32-encode'
 
 import {verifyTOTP} from "sessionlib/2fa.js";
+import {transporter} from "./accountServer.js";
 
 const hashingSecret = "LEDWAll";
 const account = {
@@ -51,7 +52,17 @@ const account = {
                         if(TOTPToken!=null) {
                             this.verifyTOTP(user.uuid, TOTPToken, false).then(result => {
                                 if (result.success === true) {
-                                    resolve(`{\"success\":\"loged in\",\"tokenValid\": true,\"session\":\"${session.startsession(user.uuid, sessionTime)}\"}`);
+
+                                    session.startsession(user.uuid, sessionTime).then(session=>{
+                                        if(session.success) {
+                                            resolve(`{\"success\":true,\"tokenValid\": true,\"session\":\"${session.session}\"}`);
+
+                                        }else{
+                                            resolve(`{"error": "Account not verified", "errorcode": "020"}`);
+
+                                        }
+                                    });
+
                                 } else {
                                     resolve(`{\"error\":\"Token invalid\",\"tokenValid\": false}`);
 
@@ -63,7 +74,17 @@ const account = {
 
                         }
                     }else{
-                        resolve(`{\"success\":\"loged in\",\"session\":\"${session.startsession(user.uuid,sessionTime)}\"}`);
+
+                        session.startsession(user.uuid, sessionTime).then(session=>{
+                            if(session.success) {
+                                resolve(`{\"success\":true,\"session\":\"${session.session}\"}`);
+
+                            }else{
+                              resolve(`{"error": "Account not verified", "errorcode": "020"}`);
+
+                            }
+                        });
+
 
                     }
 
@@ -307,6 +328,14 @@ const account = {
                 resolve();
             })
         })
+    },
+    verifyUserAccount(token) {
+        return new Promise((resolve, reject) => {
+            const account = global.database.collection("account");
+            account.updateOne({tempVerifyToken:token},{$set:{verified:true},$unset:{tempVerifyToken: ""}}).then((result)=>{
+                resolve(result.modifiedCount>0);
+            })
+        })
     }
 };
 
@@ -332,6 +361,8 @@ function checkUserEmailExisting(email,password,name) {
     })
 
 }
+
+
 export default account;
 
 function createUser(password,name,email) {
@@ -341,16 +372,34 @@ function createUser(password,name,email) {
 
         const userUUID = uuidV4();
         const account = global.database.collection("account");
+
+        const uuidBuf = Buffer.from(uuidV4(), 'utf-8')
+        const tempVerifyToken = uuidBuf.toString('base64');
+
         const user = {
             uuid: userUUID,
             email: email,
             password: pw_hash,
-            name: name
+            name: name,
+            verified: false,
+            tempVerifyToken: tempVerifyToken
         }
 
-        account.insertOne(user);
+        transporter.sendMail({
+                from: '"Rekari Noreply" <noreply@rekari.de>', // sender address
+                to: email, // list of receivers
+                subject: "Rekari FT-Cloud Account E-Mail Verification", // Subject line
+                text: "Aktivitate your Rekari FT-Cloud Account throw this link: https://api.arnold-tim.de/api/v1/account/verifyEmail?token="+tempVerifyToken, // plain text body
+                html: `<h1>Rekari FT-Cloud Account E-Mail Verification</h1><p>To enable your account ${name} please click the following link: </p><a href="https://api.arnold-tim.de/api/v1/account/verifyEmail?token=${tempVerifyToken}">Enable Account</a>`, // html body
 
-        resolve(`{\"success\":\"Account creating done\",\"session\":\"${session.startsession(user.uuid)}\"}`)
+        }).then(()=>{
+            account.insertOne(user);
+
+            resolve(`{\"success\":\"Account creating done\"}`)
+        });
+
+
+
 
     })
 
