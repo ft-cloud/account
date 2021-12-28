@@ -333,7 +333,7 @@ const account = {
         return new Promise((resolve, reject) => {
             const account = global.database.collection("account");
             account.updateOne({tempVerifyToken:token},{$set:{verified:true},$unset:{tempVerifyToken: ""}}).then((result)=>{
-                resolve(result.modifiedCount>0);
+                resolve(result.matchedCount>0);
             })
         })
     }
