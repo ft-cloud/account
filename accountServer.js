@@ -23,7 +23,7 @@ client.connect().then(()=> {
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser())
-
+app.disable('x-powered-by');
 
 export const transporter = new nodemailer.createTransport({
     host: "smtp.ionos.de",
@@ -39,7 +39,32 @@ export const transporter = new nodemailer.createTransport({
 
 app.use(cors());
 
+app.post("/api/v1/account/sendContact",(req,res)=> {
+        //send mail through nodemailer to info@rekari.de with the content of the request body
+        if (req.body.email && req.body.message && req.body.name) {
+            const mailOptions = {
+                from: '"Rekari Noreply" <noreply@rekari.de>', // sender address
+                to: "info@rekari.de",
+                subject: "Rekari - Kontaktformular",
+                text: req.body.message,
+                html: `<p>${req.body.message}</p><div>From ${req.body.email}</div><div>Name ${req.body.name}</div>`
+            }
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log(error);
+                    res.status(200).send({"success": false});
+                } else {
+                    console.log("Email sent: " + info.response);
+                    res.status(200).send({"success": true});
+                }
+            });
 
+        }else{
+            res.status(400).send({"success": false});
+        }
+
+    }
+)
 
 app.get("/api/v1/account",(req, res) => {
     res.send(JSON.stringify({microService:"Account"}))
